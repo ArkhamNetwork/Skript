@@ -41,12 +41,12 @@ public class ParseLogHandler extends LogHandler {
 	
 	@Override
 	public LogResult log(final LogEntry entry) {
-		if (entry.getLevel().intValue() >= Level.SEVERE.intValue()) {
+		if (entry.getLevel() == Level.SEVERE) {
 			final LogEntry e = error;
 			if (e == null || entry.getQuality() > e.getQuality()) {
 				error = entry;
 				if (e != null)
-					e.discarded("overridden by '" + entry.getMessage() + "' (" + ErrorQuality.get(entry.getQuality()) + " > " + ErrorQuality.get(e.getQuality()) + ")");
+					e.discarded();
 			}
 		} else {
 			log.add(entry);
@@ -71,7 +71,7 @@ public class ParseLogHandler extends LogHandler {
 	 */
 	public void clear() {
 		for (final LogEntry e : log)
-			e.discarded("cleared");
+			e.discarded();
 		log.clear();
 	}
 	
@@ -83,7 +83,7 @@ public class ParseLogHandler extends LogHandler {
 		stop();
 		SkriptLogger.logAll(log);
 		if (error != null)
-			error.discarded("not printed");
+			error.discarded();
 	}
 	
 	public void printError() {
@@ -98,25 +98,12 @@ public class ParseLogHandler extends LogHandler {
 	public void printError(final @Nullable String def) {
 		printedErrorOrLog = true;
 		stop();
-		final LogEntry error = this.error;
 		if (error != null)
 			SkriptLogger.log(error);
 		else if (def != null)
-			SkriptLogger.log(new LogEntry(SkriptLogger.SEVERE, ErrorQuality.SEMANTIC_ERROR, def));
+			SkriptLogger.log(new LogEntry(SkriptLogger.SEVERE, def));
 		for (final LogEntry e : log)
-			e.discarded("not printed");
-	}
-	
-	public void printError(final String def, final ErrorQuality quality) {
-		printedErrorOrLog = true;
-		stop();
-		final LogEntry error = this.error;
-		if (error != null && error.quality >= quality.quality())
-			SkriptLogger.log(error);
-		else
-			SkriptLogger.log(new LogEntry(SkriptLogger.SEVERE, quality, def));
-		for (final LogEntry e : log)
-			e.discarded("not printed");
+			e.discarded();
 	}
 	
 	public int getNumErrors() {

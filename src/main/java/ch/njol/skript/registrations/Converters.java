@@ -156,10 +156,9 @@ public abstract class Converters {
 		for (final Class<? extends T> t : to)
 			if (t.isInstance(o))
 				return (T) o;
-		final Class<F> c = (Class<F>) o.getClass();
 		for (final Class<? extends T> t : to) {
 			@SuppressWarnings("null")
-			final Converter<? super F, ? extends T> conv = getConverter(c, t);
+			final Converter<? super F, ? extends T> conv = getConverter((Class<F>) o.getClass(), t);
 			if (conv != null)
 				return conv.convert(o);
 		}

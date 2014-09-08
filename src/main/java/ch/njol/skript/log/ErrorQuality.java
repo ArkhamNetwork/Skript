@@ -27,16 +27,8 @@ package ch.njol.skript.log;
  * @author Peter Güttinger
  */
 public enum ErrorQuality {
-	
 	NONE, NOT_AN_EXPRESSION, SEMANTIC_ERROR;
-	
 	public int quality() {
 		return ordinal();
 	}
-	
-	@SuppressWarnings("null")
-	public static ErrorQuality get(final int quality) {
-		return values()[quality];
-	}
-	
 }

@@ -61,9 +61,6 @@ import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.TriggerSection;
 import ch.njol.skript.lang.While;
-import ch.njol.skript.lang.function.Function;
-import ch.njol.skript.lang.function.FunctionEvent;
-import ch.njol.skript.lang.function.Functions;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.localization.PluralizingArgsMessage;
@@ -148,29 +145,26 @@ final public class ScriptLoader {
 	public static Kleenean hasDelayBefore = Kleenean.FALSE;
 	
 	public static class ScriptInfo {
-		public int files, triggers, commands, functions;
+		public int files, triggers, commands;
 		
 		public ScriptInfo() {}
 		
-		public ScriptInfo(final int numFiles, final int numTriggers, final int numCommands, final int numFunctions) {
+		public ScriptInfo(final int numFiles, final int numTriggers, final int numCommands) {
 			files = numFiles;
 			triggers = numTriggers;
 			commands = numCommands;
-			functions = numFunctions;
 		}
 		
 		public void add(final ScriptInfo other) {
 			files += other.files;
 			triggers += other.triggers;
 			commands += other.commands;
-			functions += other.functions;
 		}
 		
 		public void subtract(final ScriptInfo other) {
 			files -= other.files;
 			triggers -= other.triggers;
 			commands -= other.commands;
-			functions -= other.functions;
 		}
 	}
 	
@@ -344,7 +338,6 @@ final public class ScriptLoader {
 				SkriptConfig.configs.add(config);
 			int numTriggers = 0;
 			int numCommands = 0;
-			int numFunctions = 0;
 			
 			currentAliases.clear();
 			currentOptions.clear();
@@ -475,18 +468,6 @@ final public class ScriptLoader {
 						deleteCurrentEvent();
 						
 						continue;
-					} else if (event.toLowerCase().startsWith("function ")) {
-						
-						setCurrentEvent("function", FunctionEvent.class);
-						
-						final Function<?> func = Functions.loadFunction(node);
-						if (func != null) {
-							numFunctions++;
-						}
-						
-						deleteCurrentEvent();
-						
-						continue;
 					}
 					
 					if (Skript.logVeryHigh() && !Skript.debug())
@@ -502,21 +483,17 @@ final public class ScriptLoader {
 						continue;
 					
 					if (Skript.debug() || node.debug())
-						Skript.debug(event + " (" + parsedEvent.getSecond().toString(null, true) + "):");
+						Skript.debug(event + " (" + parsedEvent.second.toString(null, true) + "):");
 					
-					setCurrentEvent("" + parsedEvent.getFirst().getName().toLowerCase(Locale.ENGLISH), parsedEvent.getFirst().events);
-					final Trigger trigger;
-					try {
-						trigger = new Trigger(config.getFile(), event, parsedEvent.getSecond(), loadItems(node));
-					} finally {
-						deleteCurrentEvent();
-					}
+					setCurrentEvent("" + parsedEvent.first.getName().toLowerCase(Locale.ENGLISH), parsedEvent.first.events);
+					final Trigger trigger = new Trigger(config.getFile(), event, parsedEvent.second, loadItems(node));
+					deleteCurrentEvent();
 					
-					if (parsedEvent.getSecond() instanceof SelfRegisteringSkriptEvent) {
-						((SelfRegisteringSkriptEvent) parsedEvent.getSecond()).register(trigger);
+					if (parsedEvent.second instanceof SelfRegisteringSkriptEvent) {
+						((SelfRegisteringSkriptEvent) parsedEvent.second).register(trigger);
 						SkriptEventHandler.addSelfRegisteringTrigger(trigger);
 					} else {
-						SkriptEventHandler.addTrigger(parsedEvent.getFirst().events, trigger);
+						SkriptEventHandler.addTrigger(parsedEvent.first.events, trigger);
 					}
 					
 //					script.triggers.add(trigger);
@@ -557,7 +534,7 @@ final public class ScriptLoader {
 //				}
 //			}
 			
-			return new ScriptInfo(1, numTriggers, numCommands, numFunctions);
+			return new ScriptInfo(1, numTriggers, numCommands);
 		} catch (final IOException e) {
 			Skript.error("Could not load " + f.getName() + ": " + ExceptionUtils.toString(e));
 		} catch (final Exception e) {
@@ -569,25 +546,19 @@ final public class ScriptLoader {
 	}
 	
 	/**
-	 * Unloads enabled scripts from the specified directory and its subdirectories.
+	 * Unloads enabled scripts from the specified directory and it's subdirectories.
 	 * 
 	 * @param folder
 	 * @return Info on the unloaded scripts
 	 */
 	final static ScriptInfo unloadScripts(final File folder) {
-		final ScriptInfo r = unloadScripts_(folder);
-		Functions.validateFunctions();
-		return r;
-	}
-	
-	private final static ScriptInfo unloadScripts_(final File folder) {
 		final ScriptInfo info = new ScriptInfo();
 		final File[] files = folder.listFiles(scriptFilter);
 		for (final File f : files) {
 			if (f.isDirectory()) {
-				info.add(unloadScripts_(f));
+				info.add(unloadScripts(f));
 			} else if (f.getName().endsWith(".sk")) {
-				info.add(unloadScript_(f));
+				info.add(unloadScript(f));
 			}
 		}
 		return info;
@@ -600,12 +571,6 @@ final public class ScriptLoader {
 	 * @return Info on the unloaded script
 	 */
 	final static ScriptInfo unloadScript(final File script) {
-		final ScriptInfo r = unloadScript_(script);
-		Functions.validateFunctions();
-		return r;
-	}
-	
-	private final static ScriptInfo unloadScript_(final File script) {
 		final ScriptInfo info = SkriptEventHandler.removeTriggers(script);
 		synchronized (loadedScripts) {
 			loadedScripts.subtract(info);
@@ -772,12 +737,11 @@ final public class ScriptLoader {
 			return null;
 		}
 		
-		setCurrentEvent("unit test", parsedEvent.getFirst().events);
-		try {
-			return new Trigger(null, event, parsedEvent.getSecond(), loadItems(node));
-		} finally {
-			deleteCurrentEvent();
-		}
+		setCurrentEvent("unit test", parsedEvent.first.events);
+		final Trigger t = new Trigger(null, event, parsedEvent.second, loadItems(node));
+		deleteCurrentEvent();
+		
+		return t;
 	}
 	
 	public final static int loadedScripts() {
@@ -789,12 +753,6 @@ final public class ScriptLoader {
 	public final static int loadedCommands() {
 		synchronized (loadedScripts) {
 			return loadedScripts.commands;
-		}
-	}
-	
-	public final static int loadedFunctions() {
-		synchronized (loadedScripts) {
-			return loadedScripts.functions;
 		}
 	}
 	

@@ -109,7 +109,7 @@ public class ExprSignText extends SimpleExpression<String> {
 		return "line " + line.toString(e, debug) + " of " + block.toString(e, debug);
 	}
 	
-	// TODO allow add, remove, and remove all (see ExprLore)
+	// TODO allow add, remove, and remove all
 	@Override
 	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {

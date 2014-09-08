@@ -28,8 +28,6 @@ import ch.njol.skript.config.SectionNode;
 
 /**
  * Represents a conditional trigger section.
- * <p>
- * TODO: make this an expression
  * 
  * @author Peter Güttinger
  * @see TriggerSection

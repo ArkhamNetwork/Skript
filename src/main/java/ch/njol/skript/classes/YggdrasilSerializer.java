@@ -24,6 +24,7 @@ package ch.njol.skript.classes;
 import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
 
+import ch.njol.skript.variables.Variables;
 import ch.njol.yggdrasil.Fields;
 import ch.njol.yggdrasil.YggdrasilSerializable;
 import ch.njol.yggdrasil.YggdrasilSerializable.YggdrasilExtendedSerializable;
@@ -45,7 +46,7 @@ public class YggdrasilSerializer<T extends YggdrasilSerializable> extends Serial
 		if (o instanceof YggdrasilExtendedSerializable)
 			((YggdrasilExtendedSerializable) o).deserialize(f);
 		else
-			f.setFields(o);
+			f.setFields(o, Variables.yggdrasil);
 	}
 	
 	@Override

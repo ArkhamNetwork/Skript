@@ -76,7 +76,6 @@ public class ExprTool extends PropertyExpression<LivingEntity, Slot> {
 		final boolean delayed = Delay.isDelayed(e);
 		return get(source, new Getter<Slot, LivingEntity>() {
 			@Override
-			@Nullable
 			public Slot get(final LivingEntity p) {
 				if (!delayed) {
 					if (e instanceof PlayerItemHeldEvent && ((PlayerItemHeldEvent) e).getPlayer() == p) {
@@ -105,8 +104,7 @@ public class ExprTool extends PropertyExpression<LivingEntity, Slot> {
 					}
 				}
 				final EntityEquipment e = p.getEquipment();
-				if (e == null)
-					return null;
+				assert e != null;
 				return new EquipmentSlot(e, EquipmentSlot.EquipSlot.TOOL) {
 					@Override
 					public String toString_i() {

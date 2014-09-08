@@ -44,7 +44,7 @@ public abstract class ProjectileUtils {
 			getShooter = Projectile.class.getMethod("getShooter");
 			try {
 				setShooter = Projectile.class.getMethod("setShooter", ProjectileSource.class);
-			} catch (final NoClassDefFoundError e) {
+			} catch (final NoSuchMethodException e) {
 				setShooter = Projectile.class.getMethod("setShooter", LivingEntity.class);
 			}
 		} catch (final NoSuchMethodException e) {

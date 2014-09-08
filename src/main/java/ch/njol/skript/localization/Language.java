@@ -307,7 +307,7 @@ public class Language {
 	private final static List<LanguageChangeListener> listeners = new ArrayList<LanguageChangeListener>();
 	
 	public static enum LanguageListenerPriority {
-		EARLIEST, NORMAL, LATEST;
+		EARLIEST, NORMAL;
 	}
 	
 	private final static int[] priorityStartIndices = new int[LanguageListenerPriority.values().length];
@@ -325,7 +325,7 @@ public class Language {
 		addListener(l, LanguageListenerPriority.NORMAL);
 	}
 	
-	public static void addListener(final LanguageChangeListener l, final LanguageListenerPriority priority) {
+	static void addListener(final LanguageChangeListener l, final LanguageListenerPriority priority) {
 		assert priority != null;
 		listeners.add(priorityStartIndices[priority.ordinal()], l);
 		for (int i = priority.ordinal() + 1; i < LanguageListenerPriority.values().length; i++)

@@ -304,10 +304,6 @@ public abstract class Commands {
 		}
 	}
 	
-	@SuppressWarnings("null")
-	private final static Pattern commandPattern = Pattern.compile("(?i)^command /?(\\S+)(\\s+(.+))?$"),
-			argumentPattern = Pattern.compile("<\\s*(?:(.+?)\\s*:\\s*)?(.+?)\\s*(?:=\\s*(" + SkriptParser.wildcard + "))?\\s*>");
-	
 	@Nullable
 	public final static ScriptCommand loadCommand(final SectionNode node) {
 		final String key = node.getKey();
@@ -332,7 +328,7 @@ public abstract class Commands {
 			return null;
 		}
 		
-		Matcher m = commandPattern.matcher(s);
+		Matcher m = Pattern.compile("(?i)^command /?(\\S+)(\\s+(.+))?$").matcher(s);
 		final boolean a = m.matches();
 		assert a;
 		
@@ -347,8 +343,8 @@ public abstract class Commands {
 		final String arguments = m.group(3) == null ? "" : m.group(3);
 		final StringBuilder pattern = new StringBuilder();
 		
-		List<Argument<?>> currentArguments = new ArrayList<Argument<?>>();
-		m = argumentPattern.matcher(arguments);
+		List<Argument<?>> currentArguments = Commands.currentArguments = new ArrayList<Argument<?>>();
+		m = Pattern.compile("<([a-zA-Z -]+?)\\s*(=\\s*(" + SkriptParser.wildcard + "))?>").matcher(arguments);
 		int lastEnd = 0;
 		int optionals = 0;
 		for (int i = 0; m.find(); i++) {
@@ -359,21 +355,21 @@ public abstract class Commands {
 			lastEnd = m.end();
 			
 			ClassInfo<?> c;
-			c = Classes.getClassInfoFromUserInput("" + m.group(2));
-			final NonNullPair<String, Boolean> p = Utils.getEnglishPlural("" + m.group(2));
+			c = Classes.getClassInfoFromUserInput("" + m.group(1));
+			final NonNullPair<String, Boolean> p = Utils.getEnglishPlural("" + m.group(1));
 			if (c == null)
-				c = Classes.getClassInfoFromUserInput(p.getFirst());
+				c = Classes.getClassInfoFromUserInput(p.first);
 			if (c == null) {
-				Skript.error("Unknown type '" + m.group(2) + "'");
+				Skript.error("unknown type '" + m.group(1) + "'");
 				return null;
 			}
 			final Parser<?> parser = c.getParser();
 			if (parser == null || !parser.canParse(ParseContext.COMMAND)) {
-				Skript.error("Can't use " + c + " as argument of a command");
+				Skript.error("can't use " + m.group(1) + " as argument of a command");
 				return null;
 			}
 			
-			final Argument<?> arg = Argument.newInstance(m.group(1), c, m.group(3), i, !p.getSecond(), optionals > 0);
+			final Argument<?> arg = Argument.newInstance(c, m.group(3), i, !p.second, optionals > 0);
 			if (arg == null)
 				return null;
 			currentArguments.add(arg);
@@ -382,7 +378,7 @@ public abstract class Commands {
 				pattern.append('[');
 				optionals++;
 			}
-			pattern.append("%" + (arg.isOptional() ? "-" : "") + Utils.toEnglishPlural(c.getCodeName(), p.getSecond()) + "%");
+			pattern.append("%" + (arg.isOptional() ? "-" : "") + Utils.toEnglishPlural(c.getCodeName(), p.second) + "%");
 		}
 		
 		pattern.append(escape("" + arguments.substring(lastEnd)));
@@ -392,15 +388,15 @@ public abstract class Commands {
 			pattern.append(']');
 		
 		String desc = "/" + command + " ";
-		final boolean wasLocal = Language.setUseLocal(true); // use localised class names in description
+		final boolean wasLocal = Language.setUseLocal(true); // use localized class names in desc
 		try {
 			desc += StringUtils.replaceAll(pattern, "(?<!\\\\)%-?(.+?)%", new Callback<String, Matcher>() {
 				@Override
 				public String run(final @Nullable Matcher m) {
 					assert m != null;
 					final NonNullPair<String, Boolean> p = Utils.getEnglishPlural("" + m.group(1));
-					final String s = p.getFirst();
-					return "<" + Classes.getClassInfo(s).getName().toString(p.getSecond()) + ">";
+					final String s = p.first;
+					return "<" + Classes.getClassInfo(s).getName().toString(p.second) + ">";
 				}
 			});
 		} finally {
@@ -450,15 +446,7 @@ public abstract class Commands {
 			assert false;
 			return null;
 		}
-		
-		Commands.currentArguments = currentArguments;
-		final ScriptCommand c;
-		try {
-			c = new ScriptCommand(config, command, "" + pattern.toString(), currentArguments, description, usage, aliases, permission, permissionMessage, executableBy, ScriptLoader.loadItems(trigger));
-		} finally {
-			Commands.currentArguments = null;
-		}
-		
+		final ScriptCommand c = new ScriptCommand(config, command, "" + pattern.toString(), currentArguments, description, usage, aliases, permission, permissionMessage, executableBy, ScriptLoader.loadItems(trigger));
 		registerCommand(c);
 		
 		if (Skript.logVeryHigh() && !Skript.debug())

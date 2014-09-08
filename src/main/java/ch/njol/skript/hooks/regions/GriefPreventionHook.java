@@ -41,10 +41,8 @@ import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.util.AABB;
-import ch.njol.skript.variables.Variables;
 import ch.njol.util.coll.iterator.EmptyIterator;
 import ch.njol.yggdrasil.Fields;
-import ch.njol.yggdrasil.YggdrasilID;
 
 /**
  * @author Peter Güttinger
@@ -63,11 +61,6 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 		return plugin.allowBuild(p, l) == null; // returns reason string if not allowed to build
 	}
 	
-	static {
-		Variables.yggdrasil.registerSingleClass(GriefPreventionRegion.class);
-	}
-	
-	@YggdrasilID("GriefPreventionRegion")
 	public final class GriefPreventionRegion extends Region {
 		
 		private transient Claim claim;
